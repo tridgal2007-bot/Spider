@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monumento de Sophia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05070c;
+      --rose: #f43f5e;
+      --rose-glow: rgba(244, 63, 94, 0.5);
+      --glass: rgba(10, 14, 23, 0.7);
+      --text: #f8fafc;
+      --muted: rgba(255, 255, 255, 0.45);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+    /* === BACKGROUND === */
+    .bg-img { position: fixed; inset: 0; background: url('teia.png') center/cover no-repeat; z-index: 1; }
+    .vignette { position: fixed; inset: 0; background: radial-gradient(ellipse at center, transparent 30%, var(--bg) 85%); z-index: 2; pointer-events: none; }
+    .particles { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+
+    /* === SCREEN SYSTEM === */
+    .screen { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 1.5rem; opacity: 0; visibility: hidden; transition: opacity 0.6s ease, visibility 0.6s ease; pointer-events: none; }
+    .screen.active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+    /* === LOADER === */
+    #loader { z-index: 100; background: var(--bg); }
+    #loader.fade-out { opacity: 0; pointer-events: none; }
+    .load-img { width: clamp(140px, 25vw, 200px); margin-bottom: 2rem; animation: slowFloat 6s ease-in-out infinite; filter: drop-shadow(0 0 25px var(--rose-glow)); }
+    @keyframes slowFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-40px) scale(1.03); } }
+    .glitch { font-family: 'JetBrains Mono', monospace; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 900; letter-spacing: 0.1em; color: #fff; text-transform: uppercase; position: relative; }
+    .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; overflow: hidden; }
+    .glitch::before { color: #0ff; animation: g1 2.5s infinite linear; clip-path: inset(0 0 50% 0); }
+    .glitch::after { color: #f0f; animation: g2 3s infinite linear; clip-path: inset(50% 0 0 0); }
+    @keyframes g1 { 0%,100% { transform: translate(0); } 20% { transform: translate(-3px, 2px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, 1px); } }
+    @keyframes g2 { 0%,100% { transform: translate(0); } 20% { transform: translate(3px, -2px); } 40% { transform: translate(-3px, 2px); } 60% { transform: translate(2px, -1px); } }
+    .bar-bg { width: 220px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 2rem; overflow: hidden; }
+    .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--rose), #ff6b81); border-radius: 4px; box-shadow: 0 0 15px var(--rose); animation: fill 3.2s ease-out forwards; }
+    @keyframes fill { to { width: 100%; } }
+
+    /* === GLASS COMPONENT === */
+    .glass { background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15); }
+
+    /* === MESSAGE MODAL === */
+    .msg-box { width: 100%; max-width: 420px; padding: 2.5rem; border-radius: 2.5rem; text-align: center; border-color: rgba(244,63,94,0.3); transform: translateY(20px); transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .screen.active .msg-box { transform: translateY(0); }
+    .badge { display: inline-block; background: var(--rose); color: #fff; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.65rem; font-weight: 800; margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(244,63,94,0.4); }
+    .msg-txt { font-size: 1.05rem; line-height: 1.7; color: rgba(255,255,255,0.92); margin-bottom: 1.8rem; font-weight: 500; }
+    .btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 0.8rem 2rem; border-radius: 1.5rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; cursor: pointer; transition: all 0.3s ease; }
+    .btn:hover { background: rgba(244,63,94,0.2); border-color: rgba(244,63,94,0.5); transform: translateY(-2px); }
+
+    /* === LOGIN === */
+    .login-card { width: 100%; max-width: 380px; padding: 3rem 2.5rem; border-radius: 3rem; text-align: center; border-color: rgba(244,63,94,0.25); }
+    .login-icon { width: 60px; height: 60px; margin: 0 auto 1.5rem; display: grid; place-items: center; background: rgba(244,63,94,0.15); border-radius: 50%; border: 2px solid rgba(244,63,94,0.4); }
+    .login-icon svg { width: 28px; height: 28px; color: var(--rose); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .title { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5em; color: var(--rose); margin-bottom: 0.5rem; }
+    .sub { font-size: 0.65rem; color: var(--muted); margin-bottom: 2rem; letter-spacing: 0.2em; }
+    input { width: 100%; padding: 1.1rem 1.5rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 1.5rem; color: #fff; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.15em; text-align: center; outline: none; transition: 0.3s; margin-bottom: 1.2rem; }
+    input:focus { border-color: var(--rose); box-shadow: 0 0 0 4px rgba(244,63,94,0.2); background: rgba(244,63,94,0.05); }
+    input::placeholder { color: rgba(255,255,255,0.35); }
+    .login-btn { width: 100%; padding: 1.1rem; background: linear-gradient(135deg, var(--rose), #be123c); color: #fff; border: none; border-radius: 1.5rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(244,63,94,0.4); position: relative; overflow: hidden; }
+    .login-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+    .login-btn:hover::before { left: 100%; }
+    .login-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(244,63,94,0.6); }
+    .err { color: #fca5a5; font-size: 0.7rem; margin-top: 1rem; min-height: 1.5rem; opacity: 0; transition: 0.3s; }
+    .err.show { opacity: 1; }
+
+    /* === MAIN CONTENT === */
+    #main { z-index: 5; flex-direction: column; padding: 2.5rem; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: auto; }
+    .brand { display: flex; align-items: center; gap: 0.8rem; }
+    .brand svg { width: 24px; height: 24px; color: var(--rose); }
+    .brand span { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; }
+    .tag { font-size: 0.65rem; font-weight: 700; color: var(--rose); background: rgba(244,63,94,0.1); padding: 0.4rem 1rem; border-radius: 2rem; border: 1px solid rgba(244,63,94,0.25); }
+    .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 3rem; }
+    .hero-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6em; color: var(--rose); }
+    .hero-name { font-size: clamp(3rem, 9vw, 6rem); font-weight: 900; line-height: 0.95; letter-spacing: -0.02em; background: linear-gradient(180deg, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-name span { -webkit-text-fill-color: var(--rose); }
+    .orb { width: clamp(220px, 35vw, 280px); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; padding: 1.5rem; position: relative; animation: float 6s ease-in-out infinite; border: 2px solid rgba(244,63,94,0.25); box-shadow: 0 0 50px var(--rose-glow), inset 0 0 40px rgba(244,63,94,0.1); }
+    .orb::before { content: ''; position: absolute; inset: -5px; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(244,63,94,0.35), transparent); animation: spin 10s linear infinite; pointer-events: none; z-index: -1; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .orb-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3em; color: var(--rose); margin-bottom: 0.5rem; }
+    .orb-val { font-size: clamp(2.5rem, 5vw, 3.5rem); font-weight: 900; color: #fff; }
+    .orb-note { margin-top: 1.2rem; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.15em; }
+    .heart { color: var(--rose); display: inline-block; animation: heartbeat 1.5s infinite; }
+    @keyframes heartbeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.2); } 28% { transform: scale(1); } 42% { transform: scale(1.15); } 56% { transform: scale(1); } }
+    footer { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; }
+    .uptime { font-family: 'JetBrains Mono', monospace; }
+
+    @media (max-width: 768px) {
+      header, footer { flex-direction: column; gap: 1rem; text-align: center; }
+      .login-card { padding: 2.5rem 1.8rem; }
+      .msg-box { padding: 2rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-img"></div>
+  <div class="vignette"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- LOADER -->
+  <div id="loader" class="screen active">
+    <img src="load.png" class="load-img" alt="Carregando">
+    <div class="glitch" data-text="MONUMENTO">MONUMENTO</div>
+    <div class="bar-bg"><div class="bar-fill"></div></div>
+  </div>
+
+  <!-- MESSAGE -->
+  <div id="msg" class="screen">
+    <div class="glass msg-box">
+      <div class="badge">💌 Recado do Monumento</div>
+      <p id="msgText" class="msg-txt"></p>
+      <button class="btn" id="closeMsgBtn">Entendi ❤️</button>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login" class="screen">
+    <div class="glass login-card">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+      <h1 class="title">Para Sophia</h1>
+      <p class="sub">Identifique-se</p>
+      <input type="password" id="pass" placeholder="DIGITE SEU NOME" autocomplete="off">
+      <button class="login-btn" id="loginBtn">Acessar</button>
+      <p id="err" class="err">Nome incorreto. Tente novamente.</p>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main" class="screen">
+    <header>
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>Monumento de Sophia</span>
+      </div>
+      <div class="tag">● Online</div>
+    </header>
+
+    <main class="hero">
+      <div class="hero-label">Meu Status</div>
+      <h1 class="hero-name">MATHEUS <span>SOARES</span></h1>
+      <div class="glass orb">
+        <div>
+          <div class="orb-label">Estado</div>
+          <div class="orb-val">VIVO</div>
+          <p class="orb-note">Coração batendo<span class="heart">❤</span></p>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div>Proteção Sophia v1.0 • Teioso está de olho</div>
+      <div class="uptime">UPTIME: <span id="up">ETERNAL</span></div>
+    </footer>
+  </div>
+
+  <script>
+    // === CONFIGURAÇÃO DAS MENSAGENS ===
+    const MESSAGES = [
+      "Sofi, por favor, seja boazinha comigo. Meu corpo aguenta muita coisa, mas receber patada de você diariamente já tá reduzindo minha expectativa de vida em uns 37 anos.",
+      "Aviso oficial: sou resistente como teia de aranha, mas até o Spider-Man precisa de carinho. Tratando com amor, eu entrego 200% de mim. Combinado, gatinha?",
+      "Lembrete diário: esse monumento é seu, mas quem mantém ele de pé é a sua doçura. Um sorriso seu recarrega minha vida, uma patada... bom, aí o HP cai."
+    ];
+
+    // === ELEMENTOS DO DOM ===
+    const loader = document.getElementById('loader');
+    const msgScreen = document.getElementById('msg');
+    const loginScreen = document.getElementById('login');
+    const mainScreen = document.getElementById('main');
+    const passInput = document.getElementById('pass');
+    const errEl = document.getElementById('err');
+    const upEl = document.getElementById('up');
+    const msgText = document.getElementById('msgText');
+    const closeMsgBtn = document.getElementById('closeMsgBtn');
+    const loginBtn = document.getElementById('loginBtn');
+
+    // === PARTÍCULAS OTIMIZADAS ===
+    function initParticles() {
+      const container = document.getElementById('particles');
+      const count = window.innerWidth < 600 ? 20 : 35;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'p';
+        const size = Math.random() * 4 + 2;
+        p.style.width = p.style.height = size + 'px';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.setProperty('--x', (Math.random() * 80 - 40) + 'px');
+        p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+        p.style.animationDelay = (Math.random() * 6) + 's';
+        p.style.opacity = Math.random() * 0.6;
+        container.appendChild(p);
+      }
+    }
+
+    // === SISTEMA DE MENSAGENS (ROTATIVO E ÚNICO) ===
+    function checkAndShowMessage() {
+      const history = JSON.parse(localStorage.getItem('monument_msgs') || '[]');
+      if (history.length >= MESSAGES.length) {
+        showLogin();
+        return;
+      }
+      msgText.textContent = MESSAGES[history.length];
+      showScreen(msgScreen);
+      
+      closeMsgBtn.onclick = () => {
+        history.push(history.length);
+        localStorage.setItem('monument_msgs', JSON.stringify(history));
+        hideScreen(msgScreen);
+        setTimeout(showLogin, 300);
+      };
+    }
+
+    // === GERENCIAMENTO DE TELAS ===
+    function showScreen(el) { el.classList.add('active'); }
+    function hideScreen(el) { el.classList.remove('active'); }
+    function showLogin() {
+      setTimeout(() => {
+        showScreen(loginScreen);
+        setTimeout(() => passInput.focus(), 100);
+      }, 100);
+    }
+
+    // === LÓGICA DE LOGIN ===
+    function attemptLogin() {
+      const val = passInput.value.trim().toLowerCase();
+      if (val === 'sophia') {
+        errEl.classList.remove('show');
+        hideScreen(loginScreen);
+        setTimeout(() => {
+          showScreen(mainScreen);
+          startUptime();
+        }, 400);
+      } else {
+        errEl.classList.add('show');
+        passInput.value = '';
+        passInput.focus();
+        passInput.style.borderColor = 'rgba(248,113,113,0.7)';
+        setTimeout(() => passInput.style.borderColor = '', 2000);
+      }
+    }
+
+    // === EVENTOS ===
+    loginBtn.addEventListener('click', attemptLogin);
+    passInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
+
+    // === UPTIME ===
+    function startUptime() {
+      let s = 0;
+      setInterval(() => {
+        s++;
+        const h = String(Math.floor(s / 3600)).padStart(2, '0');
+        const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+        const sec = String(s % 60).padStart(2, '0');
+        upEl.textContent = `${h}:${m}:${sec}`;
+      }, 1000);
+    }
+
+    // === INICIALIZAÇÃO ===
+    window.addEventListener('DOMContentLoaded', () => {
+      initParticles();
+      // Transição Loader -> Mensagem/Login
+      setTimeout(() => {
+        loader.classList.add('fade-out');
+        setTimeout(() => {
+          loader.classList.remove('active');
+          checkAndShowMessage();
+        }, 600);
+      }, 3200);
+    });
+  </script>
+</body>
+</html>
